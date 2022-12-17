@@ -1,0 +1,6 @@
+W, H = 640, 360
+FPS = 0
+
+TILESIZE = 16
+# MAP_W, MAP_H = W*3, H*4
+MAP_W, MAP_H = 1280, 960
