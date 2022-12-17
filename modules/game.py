@@ -4,6 +4,7 @@ from .config import *
 from .engine import *
 from .debug import Debug
 from .player import Player
+import csv
 
 
 class Game:
@@ -25,7 +26,7 @@ class Game:
 
         self.player = Player(self.master, self.ysort_grp)
 
-        self.bounds = []
+        self.bounds = self.load_bounds()
         self.paused = False
 
     def update_offset(self):
@@ -34,6 +35,18 @@ class Game:
         camera_rigidness = 0.18 if self.master.player.moving else 0.05
         # if self.master.player.dashing: camera_rigidness = 0.22
         self.master.offset -= (self.master.offset + (self.master.player.hitbox.center - pygame.Vector2(W/2, H/2))) * camera_rigidness * self.master.dt
+
+    def load_bounds(self):
+
+        bounds = []
+
+        for y, row in enumerate(csv.reader(open(F"data/world/bounds.csv"))):
+            for x, tile in enumerate(row):
+                if tile == '0': continue
+                rect = pygame.Rect(x*TILESIZE, y*TILESIZE, TILESIZE, TILESIZE)
+                bounds.append(rect)
+
+        return bounds
 
 
     def pause_game(self):
@@ -45,6 +58,10 @@ class Game:
     def draw(self):
 
         self.screen.fill(0xd0d0d0)
+
+        for rect in self.bounds:
+            pygame.draw.rect(self.screen, "darkgrey",
+            (rect.x + self.master.offset.x, rect.y + self.master.offset.y, rect.width, rect.height))
 
         self.ysort_grp.draw_y_sort(key=lambda sprite: sprite.hitbox.bottom)
 
@@ -60,7 +77,7 @@ class Game:
     def update(self):
         
         self.player.update()
-        # self.update_offset()
+        self.update_offset()
 
     def run(self):
 

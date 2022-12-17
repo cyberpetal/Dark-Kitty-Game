@@ -1,6 +1,7 @@
 import pygame
 from .frect import FRect
 from .entity import Entity
+import os
 
 class Player(Entity):
 
@@ -26,13 +27,13 @@ class Player(Entity):
         self.deceleration = 0.8
         self.max_speed = 2.2
         self.moving = False
+        self.facing_right = True
 
         self.EVENTS = (pygame.KEYDOWN)
 
     def update_image(self):
 
-        flip = self.direction.x < 0
-        self.image = pygame.transform.flip(self.original_image, flip, False)
+        self.image = pygame.transform.flip(self.original_image, not self.facing_right, False)
 
         self.rect.midbottom = self.hitbox.midbottom
 
@@ -47,8 +48,10 @@ class Player(Entity):
             self.input_direc.y -= 1
         if keys[pygame.K_d]:
             self.input_direc.x += 1
+            self.facing_right = True
         if keys[pygame.K_a]:
             self.input_direc.x -= 1
+            self.facing_right = False
         
         if self.input_direc.x and self.input_direc.y:
             self.input_direc.normalize_ip()
@@ -63,6 +66,14 @@ class Player(Entity):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.master.game.pause_game()
+                if event.key == pygame.K_F2:
+                    index = 0
+                    while True:
+                        name = f"screenshots/{index:04d}.png"
+                        if not os.path.exists(name):
+                            pygame.image.save(self.screen, name)
+                            break
+                        index += 1
 
     def move(self):
 
