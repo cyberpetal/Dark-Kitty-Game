@@ -6,6 +6,7 @@ from .debug import Debug
 from .player import Player
 import csv
 from .enemy import EnemyHandler
+from .text_box import TextBox
 
 
 class Game:
@@ -25,6 +26,7 @@ class Game:
 
         self.ysort_grp = CustomGroup()
 
+        TextBox(master)
         self.player = Player(self.master, self.ysort_grp)
 
         self.enemy_handler = EnemyHandler(master)
@@ -67,6 +69,8 @@ class Game:
             (rect.x + self.master.offset.x, rect.y + self.master.offset.y, rect.width, rect.height))
 
         self.ysort_grp.draw_y_sort(key=lambda sprite: sprite.hitbox.bottom)
+
+        self.enemy_handler.draw()
 
         self.debug.draw()
 

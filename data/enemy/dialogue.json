@@ -1,0 +1,29 @@
+{
+    "AWAKE":{
+        "FOLLOWING": [
+            "Don't go to the Cat", "Listen to me", "Come Back", "Stop following the cat"
+        ],
+        "WANDER": [
+            "Somehting is wrong", "Is it trying to kill us?", "Oh GOD help us", "STOP this please",
+            "Not cool"
+        ],
+        "SAVING":[
+            "Stay Away from the Cat", "The Cat is EVIL", "It is trying to kill us", "You must listen",
+            "Do you understand me?"
+        ]
+    },
+
+    "ZOMBIE":{
+        "FOLLOWING": [
+            "Come here, I just want to pet you", "It's soooo CUTE!", "Come look at the cat",
+            "OMG that cat is sooo CUTE"
+        ],
+        "IDLE": [
+            "You are so soft and FLUFFY", "Hugs!!!", "I love you"
+        ],
+        "CONFUSED": [
+            "What about the cat?", "That cute little cat is Evil? NO!", "I watched it grow",
+            "How is this possible"
+        ]
+    }
+}

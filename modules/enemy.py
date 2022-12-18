@@ -10,6 +10,8 @@ from enum import Enum
 GIVE_ATTENTION_RADIUS = 96
 GIVE_ATTENTION_PLUS_RADIUS = 32
 
+ROBOT_DIALOGUE = json.load(open("data/enemy/dialogue.json"))
+
 class State(Enum):
 
     IDLE = 0
@@ -43,7 +45,7 @@ class Enemy(Entity):
         self.acceleration = 0.2
         self.moving = True
         self.facing_right = True
-        self.dist_sq_to_player = 600
+        self.dist_sq_to_player = 1_064
 
         self.max_health = 100
         self.health = self.max_health
@@ -107,10 +109,10 @@ class Enemy(Entity):
         elif self.target_robot is not None and not self.saving and self.state == State.FOLLOWING:
             if dist_sq(self.sprite_box.center, self.target_robot.sprite_box.center) < GIVE_ATTENTION_PLUS_RADIUS**2:
                 self.saving = True
-                self.state = State.IDLE
+                self.state = State.SAVING
                 self.SAVE_TIMER.start(5_000)
                 self.thinking = True             
-                self.target_robot.state = State.IDLE
+                self.target_robot.state = State.CONFUSED
                 self.target_robot.thinking = True
 
     def move(self):
@@ -118,13 +120,12 @@ class Enemy(Entity):
         target = self.master.player.sprite_box.center
         if self.AWAKE and not self.thinking:
             if self.target_robot is None:
-                for _ in range(5):
-                    self.target_robot = random.choice(self.master.enemy_grp.sprites())
-                    if self.target_robot.AWAKE or self.target_robot.thinking: continue
+                robot = random.choice(self.master.enemy_grp.sprites())
+                if not(robot.AWAKE or robot.thinking):
                     self.state = State.FOLLOWING
-                    break
-                
-            target = self.target_robot.sprite_box.center
+                    self.target_robot = robot
+            if self.target_robot is not None:
+                target = self.target_robot.sprite_box.center
         if self.state == State.WANDER:
             target = self.wander_target
 
@@ -163,11 +164,40 @@ class Enemy(Entity):
         self.move()
         self.update_image()
 
-        if self.AWAKE:
-            self.master.debug("State:", self.state)
-            self.master.debug("saving:", self.saving)
-            self.master.debug("thinking:", self.thinking)
-            self.master.debug("target:", self.target_robot is not None)
+        # if self.AWAKE:
+        #     self.master.debug("thinking:", self.thinking)
+        #     self.master.debug("saving:", self.saving)
+        #     self.master.debug("State:", self.state)
+        #     self.master.debug("target:", self.target_robot is not None)
+
+class EnemyTextBox(pygame.sprite.Sprite):
+
+    def __init__(self, master, grps, text_box, target, duration):
+
+        super().__init__(grps)
+
+        self.master = master
+        self.screen = pygame.display.get_surface()
+        
+        self.text_box:pygame.Surface = text_box
+        self.target = target
+        self.rect = self.text_box.get_rect()
+
+        self.DURATION_TIMER = CustomTimer()
+
+        self.DURATION_TIMER.start(duration)
+
+    def draw(self):
+
+        self.screen.blit(self.text_box, self.rect)
+
+    def update(self):
+
+        if self.DURATION_TIMER.check():
+            self.kill()
+            return
+        self.rect.midbottom = self.target.rect.midtop + self.master.offset + (0, 0)
+        
 
 
 class EnemyHandler:
@@ -181,6 +211,10 @@ class EnemyHandler:
 
         self.enemy_grp = CustomGroup()
         master.enemy_grp = self.enemy_grp
+        self.enemy_text_boxes = CustomGroup()
+        self.SPAWN_TEXT_BOXES = CustomTimer()
+
+        self.SPAWN_TEXT_BOXES.start(2_000)
 
         self.grps_for_enemies = (self.enemy_grp, master.game.ysort_grp)
 
@@ -189,7 +223,31 @@ class EnemyHandler:
         hoard = Enemy(master, self.grps_for_enemies, (200, 120), "awake_robot")
         hoard.AWAKE = True
 
+    def spawn_text_boxes(self):
+        
+        if self.SPAWN_TEXT_BOXES.check():
+
+            self.SPAWN_TEXT_BOXES.start(random.randint(20, 40)*100)
+            if self.enemy_grp.sprites():
+                enemy = random.choice(self.enemy_grp.sprites())
+
+                if enemy.AWAKE and \
+                    enemy.state in (State.SAVING, State.WANDER, State.FOLLOWING):
+                        texts = ROBOT_DIALOGUE["AWAKE"][enemy.state.name]
+                elif enemy.state in (State.FOLLOWING, State.CONFUSED, State.IDLE):
+                        texts = ROBOT_DIALOGUE["ZOMBIE"][enemy.state.name]
+
+                text = random.choice(texts)
+                text_box = self.master.text_box.get_text_box(text)
+                EnemyTextBox(self.master, [self.enemy_text_boxes], text_box, enemy, 3_000)
+
+    def draw(self):
+
+        self.enemy_text_boxes.draw()
+
     def update(self):
 
+        self.spawn_text_boxes()
         self.enemy_grp.update()
+        self.enemy_text_boxes.update()
 

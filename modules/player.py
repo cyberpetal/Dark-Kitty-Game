@@ -93,7 +93,7 @@ class Player(Entity):
         self.sprite_box.midbottom = self.hitbox.midbottom
 
     def draw(self):
-
+        
         self.screen.blit(self.image, self.rect.topleft+self.master.offset)
 
     def update(self):

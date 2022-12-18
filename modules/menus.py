@@ -89,7 +89,7 @@ class MainMenu():
                         return
     def draw(self):
 
-        self.screen.fill((2, 10, 50))
+        self.screen.fill((0, 0, 0))
 
         # self.screen.blit(self.mainmenu_bg, (0, 0))
         # self.screen.blit(self.title_shadow, (self.title_rect.x-3, self.title_rect.y+3))
