@@ -55,19 +55,30 @@ class CustomTimer:
 
         self.duration = None
         self.start_time = None
+        self.loops = 0
 
-    def start(self, duration):
+    def start(self, duration, loops=1):
 
         self.running = True
         self.duration = duration
         self.start_time = pygame.time.get_ticks()
+        self.loops = loops
+
+    def stop(self):
+        
+        if self.running:
+            self.running = False
+            return True
 
     def check(self):
 
         if not self.running: return False
         
         if pygame.time.get_ticks() - self.duration >= self.start_time:
-            self.running = False
+            self.loops -= 1
+            if self.loops == 0:
+                self.running = False
+            else: self.start_time += self.duration
             return True
 
 # def blur_image(image, radius=6):

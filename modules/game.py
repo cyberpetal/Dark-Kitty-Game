@@ -5,6 +5,7 @@ from .engine import *
 from .debug import Debug
 from .player import Player
 import csv
+from .enemy import EnemyHandler
 
 
 class Game:
@@ -25,6 +26,8 @@ class Game:
         self.ysort_grp = CustomGroup()
 
         self.player = Player(self.master, self.ysort_grp)
+
+        self.enemy_handler = EnemyHandler(master)
 
         self.bounds = self.load_bounds()
         self.paused = False
@@ -77,6 +80,7 @@ class Game:
     def update(self):
         
         self.player.update()
+        self.enemy_handler.update()
         self.update_offset()
 
     def run(self):

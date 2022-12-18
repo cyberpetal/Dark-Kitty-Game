@@ -22,9 +22,9 @@ class App:
         pygame.init()
         
         #window
-        self.screen = pygame.display.set_mode((W, H), pygame.SCALED)
+        self.screen = pygame.display.set_mode((W, H), pygame.SCALED | pygame.FULLSCREEN)
         self.clock = pygame.time.Clock()
-        # pygame.display.set_caption("Forgotten Memories")
+        # pygame.display.set_caption("DarkKittyGame")
         # pygame.display.set_icon(pygame.image.load("graphics/abc/icon.png").convert_alpha())
 
         self.state = self.MAIN_MENU

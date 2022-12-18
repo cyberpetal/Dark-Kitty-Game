@@ -24,10 +24,12 @@ class Player(Entity):
         self.input_direc = pygame.Vector2(0, 0)
         self.velocity = pygame.Vector2(0, 0)
         self.acceleration = 0.4
-        self.deceleration = 0.8
+        self.deceleration = 0.3
         self.max_speed = 2.2
         self.moving = False
         self.facing_right = True
+
+        self.attention_level = 500
 
         self.EVENTS = (pygame.KEYDOWN)
 
@@ -60,7 +62,6 @@ class Player(Entity):
             self.direction.update(self.input_direc)
         else: self.moving = False
 
-
         for event in pygame.event.get(self.EVENTS):
 
             if event.type == pygame.KEYDOWN:
@@ -78,15 +79,11 @@ class Player(Entity):
     def move(self):
 
         if self.moving:
-            self.velocity += self.direction * self.acceleration  * self.master.dt
-        elif self.velocity.magnitude_squared() >= self.deceleration**2:
-            self.velocity -= self.velocity.normalize() * self.deceleration  * self.master.dt
-        else: self.velocity.update(0, 0)
+            self.velocity.move_towards_ip(self.direction * self.max_speed , self.acceleration  * self.master.dt)
+        else: self.velocity.move_towards_ip((0, 0), self.deceleration*self.master.dt)
 
-        if (mag:=self.velocity.magnitude_squared()):
-            if mag > self.max_speed**2:
-                self.velocity.scale_to_length(self.max_speed)
-        
+        # try: self.velocity.clamp_magnitude_ip(0, self.max_speed)
+        # except ValueError: pass
 
         self.hitbox.centerx += self.velocity.x * self.master.dt
         self.check_bounds_collision(0, self.master.game.bounds)
@@ -104,5 +101,7 @@ class Player(Entity):
         self.get_input_and_events()
         self.move()
         self.update_image()
+        self.attention_level -= 0.06*self.master.dt
         self.master.debug("pos: ", self.rect.center)
         self.master.debug("velocity: ", self.velocity)
+        self.master.debug("attention: ", self.attention_level)
