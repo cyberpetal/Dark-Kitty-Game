@@ -31,13 +31,13 @@ class Button():
     def interact(self, mouse_pos, click=False):
 
         if click and self.mouse_hover:
-            # if self.action != "start":self.master.sound.dict["button_click"].play()
+            if self.action != "start":self.master.sound.dict["button_click"].play()
             return self.action
         self.mouse_hover = self.detection_rect.collidepoint(mouse_pos)
         if self.mouse_hover:
             if not self.hover_sound_played:
                 self.hover_sound_played = True
-                # self.master.sound.dict["button_hover"].play()
+                self.master.sound.dict["button_hover"].play()
         else:self.hover_sound_played = False
 
     def draw(self):
@@ -56,11 +56,11 @@ class MainMenu():
         self.master = master
         self.master.main_menu = self
         self.screen = pygame.display.get_surface()
-        # self.mainmenu_bg = pygame.image.load("graphics/extra/cover.png").convert()
-        # self.title_surf = self.master.font_big.render('Winter Wreck', False, 'white')
-        # self.title_rect = self.title_surf.get_rect(midtop=(W/2, 40))
-        # self.title_shadow = self.master.font_big.render('Winter Wreck', False, (136, 8, 8))
-        # self.title_shadow.set_alpha(200)
+        self.mainmenu_bg = pygame.image.load("graphics/banner.png").convert()
+        self.title_surf = self.master.font_big.render('The Blood Cat', False, 'white')
+        self.title_rect = self.title_surf.get_rect(midtop=(W/2, 40))
+        self.title_shadow = self.master.font_big.render('The Blood Cat', False, (136, 8, 8))
+        self.title_shadow.set_alpha(200)
         self.buttons:list[Button] = []
         self.create_buttons()
         
@@ -79,7 +79,7 @@ class MainMenu():
                     if action == 'start':
                         # self.master.music.change_track("in_game")
                         # self.master.sound.dict["start_button"].play()
-                        self.master.app.state = self.master.app.IN_GAME
+                        self.master.app.state = self.master.app.CUTSCENE
                     elif action == 'fullscreen':
                         pygame.display.toggle_fullscreen()
                     elif action == 'quit':
@@ -91,9 +91,10 @@ class MainMenu():
 
         self.screen.fill((0, 0, 0))
 
-        # self.screen.blit(self.mainmenu_bg, (0, 0))
-        # self.screen.blit(self.title_shadow, (self.title_rect.x-3, self.title_rect.y+3))
-        # self.screen.blit(self.title_surf, self.title_rect)
+        self.screen.blit(self.mainmenu_bg, (0, 0))
+
+        self.screen.blit(self.title_shadow, (self.title_rect.x-3, self.title_rect.y+3))
+        self.screen.blit(self.title_surf, self.title_rect)
 
         for button in self.buttons:
             button.draw()
@@ -127,14 +128,14 @@ class PauseMenu():
 
     def open(self):
         self.bg = self.screen.copy()
-        # self.master.sound.dict["button_click"].play()
+        self.master.sound.dict["button_click"].play()
 
     def update(self):
         
         for event in pygame.event.get((pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN)):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self.master.game.paused = False
-                # self.master.sound.dict["button_click"].play()
+                self.master.sound.dict["button_click"].play()
                 return
             if event.type == pygame.MOUSEBUTTONDOWN and event.button==1:
                 for button in self.buttons:
@@ -171,7 +172,7 @@ class GameOverMenu():
         
     def create_buttons(self):
 
-        Button(self.master, (W//2, H*0.5), 'Main Menu', self.buttons)
+        Button(self.master, (W//2, H*0.6), 'Main Menu', self.buttons)
 
     def open(self, death_msg):
 
@@ -181,7 +182,13 @@ class GameOverMenu():
         self.title_rect = self.title_surf.get_rect(midtop=(W/2, 40))
         self.title_shadow = self.master.font_big.render(death_msg, False, (136, 8, 8))
         self.title_shadow.set_alpha(200)
-        # self.master.sound.dict["button_click"].play()
+
+
+        self.score_surf = self.master.fire_font.render(F"Score: {self.master.player.kill_count}", True, (220, 5, 45))
+        self.score_rect = self.score_surf.get_rect(center=(W/2, H/2))
+        self.score_shadow = self.master.fire_font.render(F"Score: {self.master.player.kill_count}", True, (136, 8, 8))
+        self.score_shadow.set_alpha(200)
+        self.master.sound.dict["button_click"].play()
 
     def update(self):
         
@@ -198,6 +205,9 @@ class GameOverMenu():
 
         self.screen.blit(self.title_shadow, (self.title_rect.x-3, self.title_rect.y+3))
         self.screen.blit(self.title_surf, self.title_rect)
+
+        self.screen.blit(self.score_shadow, (self.score_rect.x-3, self.score_rect.y+3))
+        self.screen.blit(self.score_surf, self.score_rect)
 
         for button in self.buttons:
             button.draw()

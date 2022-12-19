@@ -58,11 +58,13 @@ class Enemy(Entity):
         self.CONSUFED_TIMER = CustomTimer()
         self.THINK_TIMER = CustomTimer()
         self.WANDER_TIMER = CustomTimer()
+        self.INVINCIBILITY_TIMER = CustomTimer()
 
         self.WANDER_TIMER.start(3_000, 0)
 
         self.saving = False
         self.thinking = False
+        self.invincible = False
         self.wander_target = (200, 300)
 
     def process_events(self):
@@ -75,6 +77,7 @@ class Enemy(Entity):
             self.saving = False
             self.state = State.WANDER
             self.THINK_TIMER.start(random.randint(5, 10)*1000)
+            self.master.sound.dict[F"robot panic{random.randint(1, 3)}"].play()
 
         if self.CONSUFED_TIMER.check():
 
@@ -89,6 +92,12 @@ class Enemy(Entity):
         if self.WANDER_TIMER.check():
 
             self.wander_target = random.randint(0, MAP_W), random.randint(0, MAP_H)
+
+        if self.INVINCIBILITY_TIMER.check():
+            self.invincible = False
+            if self.health <= 0:
+                self.kill()
+                self.master.player.kill_count += 1
 
     def update_state(self):
 
@@ -108,6 +117,7 @@ class Enemy(Entity):
                 self.thinking = True             
                 self.target_robot.state = State.CONFUSED
                 self.target_robot.thinking = True
+                self.master.sound.dict[F"robot panic{random.randint(1, 3)}"].play()
 
     def move(self):
 
@@ -123,7 +133,7 @@ class Enemy(Entity):
         if self.state == State.WANDER:
             target = self.wander_target
 
-        if self.state in (State.FOLLOWING, State.WANDER):
+        if self.state in (State.FOLLOWING, State.WANDER) and not self.invincible:
 
             self.direction = (target + pygame.Vector2(0, 0) - self.sprite_box.center).normalize()
             self.velocity .move_towards_ip(self.direction * self.max_speed, self.acceleration)
@@ -137,7 +147,7 @@ class Enemy(Entity):
 
             self.facing_right = self.velocity.x >= 0
 
-        elif self.state in (State.IDLE, State.CONFUSED, State.SAVING):
+        elif self.state in (State.IDLE, State.CONFUSED, State.SAVING) or self.invincible:
             self.velocity.move_towards_ip((0, 0), 0.08)
 
         self.hitbox.centerx += self.velocity.x * self.master.dt
@@ -152,14 +162,16 @@ class Enemy(Entity):
         
     def update_image(self):
 
-        # if self.hurting:
-        #     self.image.fill((255,255,255), special_flags=pygame.BLEND_RGB_MAX)
-
         state = "robot"
         if self.AWAKE: state += "_awake"
         elif self.thinking: state += "_confused"
 
-        self.image = pygame.transform.flip(ENEMY_SPRITES[state], not self.facing_right, False)
+        image = ENEMY_SPRITES[state].copy()
+
+        if self.invincible:
+            image.fill((255,255,255), special_flags=pygame.BLEND_RGB_MAX)
+
+        self.image = pygame.transform.flip(image, not self.facing_right, False)
         self.rect.midbottom = self.hitbox.midbottom
 
     def draw(self):
@@ -202,7 +214,7 @@ class EnemyTextBox(pygame.sprite.Sprite):
 
     def update(self):
 
-        if self.DURATION_TIMER.check():
+        if self.DURATION_TIMER.check() or not self.target.alive():
             self.kill()
             return
         self.rect.midbottom = self.target.rect.midtop + self.master.offset + (0, 0)
@@ -223,18 +235,44 @@ class EnemyHandler:
         self.enemy_text_boxes = CustomGroup()
         self.SPAWN_TEXT_BOXES = CustomTimer()
 
+        self.SPAWN_TIMER = CustomTimer()
+
+        self.SPAWN_TIMER.start(3_000, loops=0)
+
         ENEMY_SPRITES.update(load_pngs_dict("graphics/enemies"))
 
         self.SPAWN_TEXT_BOXES.start(2_000)
 
         self.grps_for_enemies = (self.enemy_grp, master.game.ysort_grp)
 
-        Enemy(master, self.grps_for_enemies, (50, 250), "robot")
-        Enemy(master, self.grps_for_enemies, (250, 100), "robot")
-        hoard = Enemy(master, self.grps_for_enemies, (200, 120), "awake_robot")
-        hoard.AWAKE = True
+        # Enemy(master, self.grps_for_enemies, (50, 250), "robot")
+        # Enemy(master, self.grps_for_enemies, (250, 100), "robot")
+        # hoard = Enemy(master, self.grps_for_enemies, (200, 120), "awake_robot")
+        # hoard.AWAKE = True
 
     def spawn_text_boxes(self):
+
+        if self.SPAWN_TIMER.check() and len(self.enemy_grp) < 58:
+
+            if self.master.player.kill_count <= 10: count = 3
+            elif self.master.player.kill_count <= 15: count = 4
+            elif self.master.player.kill_count <= 50: count = 4
+            elif self.master.player.kill_count <= 80: count = 5
+            elif self.master.player.kill_count <= 100: count = 5
+            elif self.master.player.kill_count <= 130: count = 6
+
+            while True:
+
+                pos = random.randint(0, MAP_W), random.randint(0, MAP_H)
+                rect = pygame.Rect(-self.master.offset.x, -self.master.offset.y, W, H)
+                if rect.collidepoint(pos): continue
+                for rect in self.master.game.bounds:
+                    if rect.collidepoint(pos):
+                        continue
+                break
+
+            for _ in range(count):
+                Enemy(self.master, self.grps_for_enemies, pos, "robot")
         
         if self.SPAWN_TEXT_BOXES.check():
 
