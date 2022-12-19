@@ -5,8 +5,8 @@ class Master:
     
     def __init__(self) -> None:
 
-        self.font = pygame.font.SysFont("Ariel", 22)
-        self.font_big = pygame.font.SysFont("Ariel", 32)
+        self.font = pygame.font.SysFont("Ariel", 32)
+        self.font_big = pygame.font.SysFont("Ariel", 42)
 
         self.app:App
         self.dt:float
@@ -16,6 +16,7 @@ class App:
 
     MAIN_MENU = 1
     IN_GAME = 2
+    GAME_OVER = 3
 
     def __init__(self) -> None:
 
@@ -24,7 +25,7 @@ class App:
         #window
         self.screen = pygame.display.set_mode((W, H), pygame.SCALED | pygame.FULLSCREEN)
         self.clock = pygame.time.Clock()
-        # pygame.display.set_caption("DarkKittyGame")
+        pygame.display.set_caption("DarkKittyGame")
         # pygame.display.set_icon(pygame.image.load("graphics/abc/icon.png").convert_alpha())
 
         self.state = self.MAIN_MENU
@@ -37,6 +38,8 @@ class App:
 
         self.game = Game(self.master)
         self.main_menu = MainMenu(self.master)
+
+        self.game_over_menu = GameOverMenu(self.master)
 
         self.EVENT_CLEAR_TIMER = pygame.event.custom_type()
         pygame.time.set_timer(self.EVENT_CLEAR_TIMER, 30_000)
@@ -58,8 +61,10 @@ class App:
 
         if self.state == self.MAIN_MENU:
             self.main_menu.run()
-        if self.state == self.IN_GAME:
+        elif self.state == self.IN_GAME:
             self.game.run()
+        elif self.state == self.GAME_OVER:
+            self.game_over_menu.run()
 
 
     def run(self):
@@ -67,8 +72,8 @@ class App:
         while True:
             
             pygame.display.update()
-            self.master.dt = self.clock.tick(FPS) / 16.667
-            if self.master.dt > 12: self.master.dt = 12
+            self.master.dt = self.clock.tick_busy_loop(FPS) / 16.667
+            if self.master.dt > 6: self.master.dt = 6
             if not self.master.game.paused: self.master.debug("FPS: ", round(self.clock.get_fps(), 2))
             self.process_events()
             self.run_app()

@@ -156,3 +156,53 @@ class PauseMenu():
         for button in self.buttons:
             button.draw()
             button.interact(pygame.mouse.get_pos())
+
+
+class GameOverMenu():
+
+    def __init__(self, master):
+        self.master = master
+        self.master.game_over_menu = self
+
+        self.screen = pygame.display.get_surface()
+
+        self.buttons:list[Button] = []
+        self.create_buttons()
+        
+    def create_buttons(self):
+
+        Button(self.master, (W//2, H*0.5), 'Main Menu', self.buttons)
+
+    def open(self, death_msg):
+
+        self.master.app.state = self.master.app.GAME_OVER
+
+        self.title_surf = self.master.font_big.render(death_msg, False, 'white')
+        self.title_rect = self.title_surf.get_rect(midtop=(W/2, 40))
+        self.title_shadow = self.master.font_big.render(death_msg, False, (136, 8, 8))
+        self.title_shadow.set_alpha(200)
+        # self.master.sound.dict["button_click"].play()
+
+    def update(self):
+        
+        for event in pygame.event.get(pygame.MOUSEBUTTONDOWN):
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button==1:
+                for button in self.buttons:
+                    action = button.interact(event.pos, click=True)
+                    if action == 'Main Menu':
+                        self.master.app.state = self.master.app.MAIN_MENU
+                        self.master.game.reset_game()
+    def draw(self):
+
+        self.screen.fill((0, 0, 0)) 
+
+        self.screen.blit(self.title_shadow, (self.title_rect.x-3, self.title_rect.y+3))
+        self.screen.blit(self.title_surf, self.title_rect)
+
+        for button in self.buttons:
+            button.draw()
+            button.interact(pygame.mouse.get_pos())
+
+    def run(self):
+        self.update()
+        self.draw()

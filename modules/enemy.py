@@ -12,6 +12,8 @@ GIVE_ATTENTION_PLUS_RADIUS = 32
 
 ROBOT_DIALOGUE = json.load(open("data/enemy/dialogue.json"))
 
+ENEMY_SPRITES = {}
+
 class State(Enum):
 
     IDLE = 0
@@ -28,14 +30,13 @@ class Enemy(Entity):
         self.master = master
         self.screen = pygame.display.get_surface()
 
-        self.type = sprite_type
+        # self.type = sprite_type
         self.start_pos = start_pos
 
-        self.hitbox = FRect(*self.start_pos, 12, 9)
-        self.sprite_box = FRect(0, 0, 8, 30)
+        self.hitbox = FRect(*self.start_pos, 26, 12)
+        self.sprite_box = FRect(0, 0, 28, 64)
 
-        self.original_image = pygame.image.load(F"graphics/test/{sprite_type}.png").convert_alpha()
-        self.image = self.original_image
+        self.image = ENEMY_SPRITES['robot']
         self.rect = self.image.get_rect(midbottom=(self.hitbox.midbottom))
 
         self.state = State.FOLLOWING
@@ -89,21 +90,14 @@ class Enemy(Entity):
 
             self.wander_target = random.randint(0, MAP_W), random.randint(0, MAP_H)
 
-    def update_image(self):
-
-        # if self.hurting:
-        #     self.image.fill((255,255,255), special_flags=pygame.BLEND_RGB_MAX)
-        flip = self.velocity.x < 0
-        self.image = pygame.transform.flip(self.original_image, flip, False)
-        self.rect.midbottom = self.hitbox.midbottom
-
     def update_state(self):
 
         if not self.AWAKE and not self.thinking:
             if self.dist_sq_to_player < GIVE_ATTENTION_RADIUS**2:
+                self.master.player.got_attention = True
                 self.master.player.attention_level += 0.01 * self.master.dt
                 if self.dist_sq_to_player < GIVE_ATTENTION_PLUS_RADIUS**2:
-                    self.master.player.attention_level += 0.1 * self.master.dt
+                    self.master.player.attention_level += 0.025 * self.master.dt
                     self.state = State.IDLE
                 else: self.state = State.FOLLOWING
         elif self.target_robot is not None and not self.saving and self.state == State.FOLLOWING:
@@ -130,18 +124,21 @@ class Enemy(Entity):
             target = self.wander_target
 
         if self.state in (State.FOLLOWING, State.WANDER):
-                self.direction = (target + pygame.Vector2(0, 0) - self.sprite_box.center).normalize()
-                self.velocity .move_towards_ip(self.direction * self.max_speed, self.acceleration)
+
+            self.direction = (target + pygame.Vector2(0, 0) - self.sprite_box.center).normalize()
+            self.velocity .move_towards_ip(self.direction * self.max_speed, self.acceleration)
+            
+            for enemy in self.master.enemy_grp.sprites():
+                if enemy == self: continue
+                if self.hitbox.colliderect(enemy.hitbox):
+                    try:
+                        self.velocity += 0.25 * (self.hitbox.center + pygame.Vector2(0, 0) - enemy.hitbox.center).normalize()
+                    except ValueError: pass
+
+            self.facing_right = self.velocity.x >= 0
 
         elif self.state in (State.IDLE, State.CONFUSED, State.SAVING):
-            self.velocity.move_towards_ip((0, 0), 0.05*self.master.dt)
-
-        for enemy in self.master.enemy_grp.sprites():
-            if enemy == self: continue
-            if self.sprite_box.colliderect(enemy.sprite_box):
-                try:
-                    self.velocity += 0.6 * (self.sprite_box.center + pygame.Vector2(0, 0) - enemy.sprite_box.center).normalize()
-                except ValueError: pass
+            self.velocity.move_towards_ip((0, 0), 0.08)
 
         self.hitbox.centerx += self.velocity.x * self.master.dt
         self.check_bounds_collision(0, self.master.game.bounds)
@@ -153,6 +150,18 @@ class Enemy(Entity):
 
         self.dist_sq_to_player = dist_sq(self.master.player.sprite_box.center, self.sprite_box.center)
         
+    def update_image(self):
+
+        # if self.hurting:
+        #     self.image.fill((255,255,255), special_flags=pygame.BLEND_RGB_MAX)
+
+        state = "robot"
+        if self.AWAKE: state += "_awake"
+        elif self.thinking: state += "_confused"
+
+        self.image = pygame.transform.flip(ENEMY_SPRITES[state], not self.facing_right, False)
+        self.rect.midbottom = self.hitbox.midbottom
+
     def draw(self):
 
         self.screen.blit(self.image, self.rect.topleft+self.master.offset)
@@ -213,6 +222,8 @@ class EnemyHandler:
         master.enemy_grp = self.enemy_grp
         self.enemy_text_boxes = CustomGroup()
         self.SPAWN_TEXT_BOXES = CustomTimer()
+
+        ENEMY_SPRITES.update(load_pngs_dict("graphics/enemies"))
 
         self.SPAWN_TEXT_BOXES.start(2_000)
 

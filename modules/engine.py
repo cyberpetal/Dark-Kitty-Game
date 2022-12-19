@@ -38,6 +38,13 @@ def import_sprite_sheets(folder_path):
 
     return animations
 
+def load_pngs_dict(folder_path):
+
+    sprites = {}
+    for file in os.listdir(folder_path):
+        sprites[file.rstrip(".png")] = pygame.image.load(F"{folder_path}/{file}").convert_alpha()
+    return sprites
+
 def load_pngs(folder_path):
     "loads all png from folder"
 

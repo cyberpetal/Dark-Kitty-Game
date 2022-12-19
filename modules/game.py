@@ -34,6 +34,17 @@ class Game:
         self.bounds = self.load_bounds()
         self.paused = False
 
+    def reset_game(self):
+
+        self.player.attention_level = 50
+        self.player.dead = False
+        self.player.hitbox.midbottom = self.player.start_pos
+
+        for enemy in self.master.enemy_grp.sprites():
+            enemy.kill()
+
+        self.enemy_handler.enemy_text_boxes.empty()
+
     def update_offset(self):
 
         # self.offset =  (self.master.player.hitbox.center - pygame.Vector2(W/2, H/2)) * -1
