@@ -184,7 +184,7 @@ class Player(Entity):
         self.move()
         self.weapon.update()
         self.update_image()
-        if not self.got_attention: self.attention_level -= 0.03*self.master.dt
+        if not self.got_attention: self.attention_level -= 0.04*self.master.dt
         self.master.debug("pos: ", self.rect.center)
         self.master.debug("velocity: ", self.velocity)
         self.master.debug("attention: ", self.attention_level)

@@ -104,9 +104,9 @@ class Enemy(Entity):
         if not self.AWAKE and not self.thinking:
             if self.dist_sq_to_player < GIVE_ATTENTION_RADIUS**2:
                 self.master.player.got_attention = True
-                self.master.player.attention_level += 0.01 * self.master.dt
+                self.master.player.attention_level += 0.008 * self.master.dt
                 if self.dist_sq_to_player < GIVE_ATTENTION_PLUS_RADIUS**2:
-                    self.master.player.attention_level += 0.025 * self.master.dt
+                    self.master.player.attention_level += 0.012 * self.master.dt
                     self.state = State.IDLE
                 else: self.state = State.FOLLOWING
         elif self.target_robot is not None and not self.saving and self.state == State.FOLLOWING:
@@ -252,14 +252,15 @@ class EnemyHandler:
 
     def spawn_text_boxes(self):
 
-        if self.SPAWN_TIMER.check() and len(self.enemy_grp) < 58:
+        if self.SPAWN_TIMER.check() and len(self.enemy_grp) < 36:
 
-            if self.master.player.kill_count <= 10: count = 3
+            if self.master.player.kill_count <= 10: count = 4
             elif self.master.player.kill_count <= 15: count = 4
-            elif self.master.player.kill_count <= 50: count = 4
+            elif self.master.player.kill_count <= 50: count = 5
             elif self.master.player.kill_count <= 80: count = 5
-            elif self.master.player.kill_count <= 100: count = 5
-            elif self.master.player.kill_count <= 130: count = 6
+            elif self.master.player.kill_count <= 100: count = 6
+            elif self.master.player.kill_count <= 130: count = 8
+            else: count = 9
 
             while True:
 
